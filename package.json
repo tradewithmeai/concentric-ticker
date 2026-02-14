@@ -1,0 +1,26 @@
+{
+  "name": "concentric-ticker",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Concentric Crypto Ticker - Web, Desktop & Android",
+  "author": {
+    "name": "SolvX",
+    "email": "deploy@solvx.uk"
+  },
+  "scripts": {
+    "dev:web": "turbo run dev --filter=@concentric/web",
+    "dev:desktop": "turbo run dev --filter=@concentric/desktop",
+    "dev:android": "turbo run dev --filter=@concentric/android",
+    "build:web": "turbo run build --filter=@concentric/web",
+    "build:desktop": "turbo run build --filter=@concentric/desktop",
+    "build:android": "turbo run build --filter=@concentric/android",
+    "build:all": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.5.3"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

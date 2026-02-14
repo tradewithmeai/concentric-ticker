@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "composite": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "strict": true,
+    "outDir": "out",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@concentric/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["electron/**/*.ts", "electron.vite.config.ts"]
+}

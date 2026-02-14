@@ -137,3 +137,16 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Turborepo
+.turbo
+
+# Electron build output
+apps/desktop/out/
+apps/desktop/release/
+
+# Capacitor native projects
+apps/android/android/
+
+# Temp scripts
+rewrite-imports.cjs

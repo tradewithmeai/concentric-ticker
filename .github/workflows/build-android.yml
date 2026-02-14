@@ -1,0 +1,47 @@
+name: Build Android
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build web assets
+        working-directory: apps/android
+        run: pnpm build
+
+      - name: Sync Capacitor
+        working-directory: apps/android
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: apps/android/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: apps/android/android/app/build/outputs/apk/debug/*.apk
