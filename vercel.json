@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @concentric/android build",
+  "outputDirectory": "apps/android/dist",
+  "installCommand": "pnpm install",
+  "framework": "vite"
+}
