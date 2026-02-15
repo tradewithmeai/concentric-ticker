@@ -23,7 +23,7 @@ export const AudioManager = () => {
   const [preferences, setPreferences] = useState<AudioPreferences>({
     sound_type: 'chime',
     volume: 0.5,
-    enabled: true,
+    enabled: false,
   });
   const [loading, setLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);

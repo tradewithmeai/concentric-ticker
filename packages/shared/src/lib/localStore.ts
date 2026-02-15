@@ -90,9 +90,9 @@ export function getAudioPreferences(): AudioPreferences {
     const raw = localStorage.getItem(AUDIO_PREFS_KEY)
     return raw
       ? JSON.parse(raw)
-      : { sound_enabled: true, sound_type: 'bell', volume: 0.7 }
+      : { sound_enabled: false, sound_type: 'bell', volume: 0.7 }
   } catch {
-    return { sound_enabled: true, sound_type: 'bell', volume: 0.7 }
+    return { sound_enabled: false, sound_type: 'bell', volume: 0.7 }
   }
 }
 
