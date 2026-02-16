@@ -10,7 +10,7 @@ import { useToast } from '@concentric/shared/hooks/use-toast'
 import { useCryptoData } from '@concentric/shared/hooks/useCryptoData'
 import { useDelayedTrue } from '@concentric/shared/hooks/useDelayedTrue'
 import { announce } from '@concentric/shared/utils/announcements'
-import { Plus, Settings, Bell, X, Trash2 } from 'lucide-react'
+import { Plus, Settings, Bell, X, Trash2, BarChart3 } from 'lucide-react'
 import { Button } from '@concentric/shared/components/ui/button'
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@concentric/shared/components/ui/dialog'
+import { TradingDialog } from '@concentric/shared/components/trading/TradingDialog'
 
 interface DisplayAlert {
   id: string
@@ -45,6 +46,7 @@ export const MinimalCryptoTracker = () => {
   const [selectedAssets, setSelectedAssets] = useState<string[]>([])
   const [showSettings, setShowSettings] = useState(false)
   const [showAlerts, setShowAlerts] = useState(false)
+  const [showTrading, setShowTrading] = useState(false)
   const [alerts, setAlerts] = useState<DisplayAlert[]>([])
   const [loading, setLoading] = useState(false)
   const [cancelingAlert, setCancelingAlert] = useState<string | null>(null)
@@ -241,6 +243,18 @@ export const MinimalCryptoTracker = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Trading Dialog */}
+        <Button
+          variant="outline"
+          className="bg-gray-800 border-gray-700 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label="Open trading panel"
+          onClick={() => setShowTrading(true)}
+        >
+          <BarChart3 className="w-4 h-4 mr-2" aria-hidden="true" />
+          Trading
+        </Button>
+        <TradingDialog open={showTrading} onOpenChange={setShowTrading} />
 
         {/* Settings Dialog */}
         <Dialog open={showSettings} onOpenChange={setShowSettings}>

@@ -22,6 +22,7 @@ import {
   getAudioPreferences,
   LocalAlert,
 } from '@concentric/shared/lib/localStore'
+import { executeAlertTrade } from '@concentric/shared/lib/trading/executeAlertTrade'
 
 interface TrailingAlert {
   id: string
@@ -162,7 +163,7 @@ export const TrailingAlertManager: React.FC<TrailingAlertManagerProps> = ({
     }
   }, [currentPrice, alerts])
 
-  const triggerTrailingAlert = (alert: TrailingAlert) => {
+  const triggerTrailingAlert = async (alert: TrailingAlert) => {
     try {
       // Update alert as triggered
       updateAlert(alert.id, {
@@ -181,6 +182,26 @@ export const TrailingAlertManager: React.FC<TrailingAlertManagerProps> = ({
         description: `${symbol.replace('USDT', '')} ${alert.trail_direction === 'up' ? 'fell below' : 'rose above'} $${alert.trail_trigger_price.toFixed(4)}`,
         duration: 8000,
       })
+
+      // Execute trade if configured
+      const localAlert = getAlerts().find((a) => a.id === alert.id)
+      if (localAlert?.trade_enabled) {
+        const result = await executeAlertTrade(localAlert)
+        if (result?.success) {
+          toast({
+            title: 'Trade Executed',
+            description: `${localAlert.trade_side} ${localAlert.trade_quantity} ${symbol.replace('USDT', '')} @ $${alert.trail_trigger_price.toFixed(2)}`,
+            duration: 10000,
+          })
+        } else if (result) {
+          toast({
+            title: 'Trade Failed',
+            description: result.error,
+            variant: 'destructive',
+            duration: 10000,
+          })
+        }
+      }
     } catch (error) {
       console.error('Error triggering trailing alert:', error)
     }

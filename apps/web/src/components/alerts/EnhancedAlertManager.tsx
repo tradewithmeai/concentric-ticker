@@ -41,7 +41,6 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
   const [alertType, setAlertType] = useState<'price_cross' | 'percentage_change' | 'trailing_stop'>('price_cross');
   const [targetPrice, setTargetPrice] = useState('');
   const [percentageThreshold, setPercentageThreshold] = useState('');
-  const [isAbove, setIsAbove] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -247,11 +246,15 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
     }
 
     try {
+      const price = alertType === 'price_cross' ? parseFloat(targetPrice) : currentPrice || 0;
+      // Auto-detect direction: if current price is above target, alert when it drops below; vice versa
+      const isAbove = !(currentPrice && currentPrice > price);
+
       const alertData = {
         user_id: user.id,
         symbol,
         alert_type: alertType,
-        target_price: alertType === 'price_cross' ? parseFloat(targetPrice) : currentPrice || 0,
+        target_price: price,
         is_above: isAbove,
         percentage_threshold: alertType === 'percentage_change' ? parseFloat(percentageThreshold) : null,
       };
@@ -362,15 +365,6 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
           <div className="space-y-3">
             {alertType === 'price_cross' && (
               <div className="flex gap-2">
-                <Select value={isAbove ? 'above' : 'below'} onValueChange={(value) => setIsAbove(value === 'above')}>
-                  <SelectTrigger className="w-24 bg-gray-800 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="above" className="text-white">Above</SelectItem>
-                    <SelectItem value="below" className="text-white">Below</SelectItem>
-                  </SelectContent>
-                </Select>
                 <Input
                   placeholder="Target price"
                   value={targetPrice}
@@ -391,15 +385,6 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
 
             {alertType === 'percentage_change' && (
               <div className="flex gap-2">
-                <Select value={isAbove ? 'up' : 'down'} onValueChange={(value) => setIsAbove(value === 'up')}>
-                  <SelectTrigger className="w-20 bg-gray-800 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="up" className="text-white">Up</SelectItem>
-                    <SelectItem value="down" className="text-white">Down</SelectItem>
-                  </SelectContent>
-                </Select>
                 <Input
                   placeholder="% threshold"
                   value={percentageThreshold}

@@ -4,6 +4,7 @@
  */
 
 import { AlertType } from './types'
+import type { OrderSide, AccountType } from './trading/types'
 
 const ALERTS_KEY = 'crypto-ticker-alerts'
 const AUDIO_PREFS_KEY = 'crypto-ticker-audio-prefs'
@@ -19,6 +20,11 @@ export interface LocalAlert {
   status: 'active' | 'triggered' | 'cancelled'
   created_at: string
   triggered_at?: string
+  // Optional trade fields (backward-compatible)
+  trade_enabled?: boolean
+  trade_side?: OrderSide
+  trade_quantity?: string
+  trade_account_type?: AccountType
 }
 
 export interface AudioPreferences {

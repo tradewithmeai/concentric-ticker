@@ -120,7 +120,9 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
 
   // Create alert for indicator value
   const createIndicatorAlert = useCallback(
-    (indicatorName: string, indicatorValue: number, isAbove: boolean = true) => {
+    (indicatorName: string, indicatorValue: number) => {
+      // Auto-detect direction: if price is above target, alert when it drops below; vice versa
+      const isAbove = currentPrice < indicatorValue
       if (!indicatorValue || indicatorValue === 0) {
         toast({
           title: 'Invalid indicator value',
@@ -377,7 +379,7 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
                             <div className="flex gap-1">
                               <button
                                 onClick={() =>
-                                  createIndicatorAlert(ma.name, maValue, currentPrice < maValue)
+                                  createIndicatorAlert(ma.name, maValue)
                                 }
                                 className={`p-1 hover:bg-gray-700 rounded transition-all ${
                                   creatingAlert === ma.name ? 'animate-pulse' : ''
@@ -479,8 +481,7 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
                       onClick={() =>
                         createIndicatorAlert(
                           'Bollinger Upper Band',
-                          currentBollingerBands.upper,
-                          false
+                          currentBollingerBands.upper
                         )
                       }
                       className={`p-1 hover:bg-gray-700 rounded transition-all ${
@@ -514,8 +515,7 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
                       onClick={() =>
                         createIndicatorAlert(
                           'Bollinger Middle Band',
-                          currentBollingerBands.middle,
-                          currentPrice < currentBollingerBands.middle
+                          currentBollingerBands.middle
                         )
                       }
                       className={`p-1 hover:bg-gray-700 rounded transition-all ${
@@ -549,8 +549,7 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
                       onClick={() =>
                         createIndicatorAlert(
                           'Bollinger Lower Band',
-                          currentBollingerBands.lower,
-                          true
+                          currentBollingerBands.lower
                         )
                       }
                       className={`p-1 hover:bg-gray-700 rounded transition-all ${

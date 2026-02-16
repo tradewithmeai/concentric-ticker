@@ -22,7 +22,10 @@ import {
   getAudioPreferences,
   LocalAlert,
 } from '@concentric/shared/lib/localStore'
+import { executeAlertTrade } from '@concentric/shared/lib/trading/executeAlertTrade'
 import { TrailingAlertManager } from './TrailingAlertManager'
+import { TradeToggle } from '@concentric/shared/components/trading/TradeToggle'
+import type { TradeAlertConfig } from '@concentric/shared/lib/trading/types'
 
 interface Alert {
   id: string
@@ -68,7 +71,7 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
   )
   const [targetPrice, setTargetPrice] = useState('')
   const [percentageThreshold, setPercentageThreshold] = useState('')
-  const [isAbove, setIsAbove] = useState(true)
+  const [tradeConfig, setTradeConfig] = useState<TradeAlertConfig | null>(null)
 
   const loadAlerts = useCallback(() => {
     try {
@@ -121,7 +124,7 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
     }
   }, [currentPrice, alerts])
 
-  const triggerAlert = (alert: Alert) => {
+  const triggerAlert = async (alert: Alert) => {
     try {
       // Update alert as triggered
       updateAlert(alert.id, {
@@ -145,6 +148,26 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
         description: alertMessage,
         duration: 8000,
       })
+
+      // Execute trade if configured
+      const localAlert = getAlerts().find((a) => a.id === alert.id)
+      if (localAlert?.trade_enabled) {
+        const result = await executeAlertTrade(localAlert)
+        if (result?.success) {
+          toast({
+            title: 'Trade Executed',
+            description: `${localAlert.trade_side} ${localAlert.trade_quantity} ${symbol.replace('USDT', '')} @ $${alert.target_price}`,
+            duration: 10000,
+          })
+        } else if (result) {
+          toast({
+            title: 'Trade Failed',
+            description: result.error,
+            variant: 'destructive',
+            duration: 10000,
+          })
+        }
+      }
     } catch (error) {
       console.error('Error triggering alert:', error)
     }
@@ -243,13 +266,23 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
     }
 
     try {
+      const price = alertType === 'price_cross' ? parseFloat(targetPrice) : currentPrice || 0
+      // Auto-detect direction: if current price is above target, alert when it drops below; vice versa
+      const direction = currentPrice && currentPrice > price ? 'below' : 'above'
+
       const newAlert = createAlert({
         symbol,
-        target_price: alertType === 'price_cross' ? parseFloat(targetPrice) : currentPrice || 0,
-        direction: isAbove ? 'above' : 'below',
+        target_price: price,
+        direction,
         alert_type: alertType,
         trailing_percent:
           alertType === 'percentage_change' ? parseFloat(percentageThreshold) : undefined,
+        ...(tradeConfig && {
+          trade_enabled: tradeConfig.trade_enabled,
+          trade_side: tradeConfig.trade_side,
+          trade_quantity: tradeConfig.trade_quantity,
+          trade_account_type: tradeConfig.trade_account_type,
+        }),
       })
 
       setAlerts((prev) => [mapLocalAlert(newAlert), ...prev])
@@ -327,22 +360,6 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
           <div className="space-y-3">
             {alertType === 'price_cross' && (
               <div className="flex gap-2">
-                <Select
-                  value={isAbove ? 'above' : 'below'}
-                  onValueChange={(value) => setIsAbove(value === 'above')}
-                >
-                  <SelectTrigger className="w-24 bg-gray-800 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="above" className="text-white">
-                      Above
-                    </SelectItem>
-                    <SelectItem value="below" className="text-white">
-                      Below
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
                 <Input
                   placeholder="Target price"
                   value={targetPrice}
@@ -359,22 +376,6 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
 
             {alertType === 'percentage_change' && (
               <div className="flex gap-2">
-                <Select
-                  value={isAbove ? 'up' : 'down'}
-                  onValueChange={(value) => setIsAbove(value === 'up')}
-                >
-                  <SelectTrigger className="w-20 bg-gray-800 border-gray-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="up" className="text-white">
-                      Up
-                    </SelectItem>
-                    <SelectItem value="down" className="text-white">
-                      Down
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
                 <Input
                   placeholder="% threshold"
                   value={percentageThreshold}
@@ -391,6 +392,9 @@ export const EnhancedAlertManager: React.FC<EnhancedAlertManagerProps> = ({
               </div>
             )}
           </div>
+
+          {/* Trade Toggle */}
+          <TradeToggle onChange={setTradeConfig} />
 
           {/* Active Alerts List */}
           <div className="space-y-2 max-h-40 overflow-y-auto">

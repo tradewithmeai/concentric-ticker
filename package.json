@@ -16,9 +16,11 @@
     "build:android": "turbo run build --filter=@concentric/android",
     "build:all": "turbo run build",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "test:binance": "tsx scripts/binance-test.ts"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "turbo": "^2.3.0",
     "typescript": "^5.5.3"
   },
