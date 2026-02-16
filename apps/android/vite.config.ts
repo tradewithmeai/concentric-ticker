@@ -10,4 +10,13 @@ export default defineConfig({
       "@concentric/shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
   },
+  server: {
+    proxy: {
+      "/binance-api": {
+        target: "https://api.binance.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/binance-api/, ""),
+      },
+    },
+  },
 });

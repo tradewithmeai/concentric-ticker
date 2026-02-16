@@ -20,13 +20,18 @@ function validateBinanceBase(value: unknown): string {
 
 function getBinanceBase(): string {
   const validated = validateBinanceBase(RAW)
-  const defaultUrl = 'https://api.binance.com'
 
-  if (!validated) {
-    return defaultUrl
+  if (validated) {
+    return validated
   }
 
-  return validated
+  // In dev mode with Vite proxy, use relative path to avoid CORS
+  // Electron doesn't have CORS issues so it uses the direct URL
+  if (import.meta.env.DEV && !navigator.userAgent.includes('Electron')) {
+    return '/binance-api'
+  }
+
+  return 'https://api.binance.com'
 }
 
 export const BINANCE_BASE = getBinanceBase()
