@@ -8,6 +8,7 @@ const AssetSelector = lazy(() =>
 import { getAlerts, deleteAlert, deleteAlerts, LocalAlert } from '@concentric/shared/lib/localStore'
 import { useToast } from '@concentric/shared/hooks/use-toast'
 import { useCryptoData } from '@concentric/shared/hooks/useCryptoData'
+import { useAlertChecker } from '@concentric/shared/hooks/useAlertChecker'
 import { useDelayedTrue } from '@concentric/shared/hooks/useDelayedTrue'
 import { announce } from '@concentric/shared/utils/announcements'
 import { Plus, Settings, Bell, X, Trash2, BarChart3 } from 'lucide-react'
@@ -116,6 +117,9 @@ export const MinimalCryptoTracker = () => {
     getTechnicalIndicators,
     getHistoricalPrices,
   } = useCryptoData(selectedAssets)
+
+  // Check alerts against live prices in the background
+  useAlertChecker(priceData)
 
   const shouldShowSkeleton = useDelayedTrue(isLoading)
 
