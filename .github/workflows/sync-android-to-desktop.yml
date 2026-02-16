@@ -1,0 +1,68 @@
+name: Sync Android → Desktop Components
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/android/src/components/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for differences
+        id: diff
+        run: |
+          # List all component files in android
+          ANDROID_DIR="apps/android/src/components"
+          DESKTOP_DIR="apps/desktop/src/components"
+
+          CHANGED=false
+
+          # Find all files in android components and compare with desktop
+          while IFS= read -r file; do
+            rel="${file#$ANDROID_DIR/}"
+            desktop_file="$DESKTOP_DIR/$rel"
+
+            if [ -f "$desktop_file" ]; then
+              if ! diff -q "$file" "$desktop_file" > /dev/null 2>&1; then
+                echo "Changed: $rel"
+                CHANGED=true
+              fi
+            else
+              echo "New file: $rel"
+              CHANGED=true
+            fi
+          done < <(find "$ANDROID_DIR" -type f -name '*.tsx' -o -name '*.ts')
+
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Sync components
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          ANDROID_DIR="apps/android/src/components"
+          DESKTOP_DIR="apps/desktop/src/components"
+
+          # Copy all android component files to desktop, preserving directory structure
+          while IFS= read -r file; do
+            rel="${file#$ANDROID_DIR/}"
+            dest="$DESKTOP_DIR/$rel"
+            mkdir -p "$(dirname "$dest")"
+            cp "$file" "$dest"
+            echo "Synced: $rel"
+          done < <(find "$ANDROID_DIR" -type f -name '*.tsx' -o -name '*.ts')
+
+      - name: Commit changes
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/desktop/src/components/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync components from android to desktop"
+            git push
+          fi
