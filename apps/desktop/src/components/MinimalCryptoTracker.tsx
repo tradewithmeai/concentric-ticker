@@ -21,6 +21,7 @@ import {
   DialogTrigger,
 } from '@concentric/shared/components/ui/dialog'
 import { TradingDialog } from '@concentric/shared/components/trading/TradingDialog'
+import { AlertSoundSettings } from '@concentric/shared/components/AlertSoundSettings'
 
 interface DisplayAlert {
   id: string
@@ -119,7 +120,7 @@ export const MinimalCryptoTracker = () => {
   } = useCryptoData(selectedAssets)
 
   // Check alerts against live prices in the background
-  useAlertChecker(priceData)
+  const { activeAlarm, silence } = useAlertChecker(priceData)
 
   const shouldShowSkeleton = useDelayedTrue(isLoading)
 
@@ -157,6 +158,26 @@ export const MinimalCryptoTracker = () => {
 
   return (
     <div className="space-y-8">
+      {/* Persistent alarm overlay */}
+      {activeAlarm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="text-center space-y-6 p-8">
+            <div className="text-red-500 text-6xl animate-pulse">
+              <Bell className="w-16 h-16 mx-auto" />
+            </div>
+            <div className="text-white text-2xl font-bold">Alert Triggered!</div>
+            <div className="text-gray-300 text-lg">{activeAlarm.description}</div>
+            <Button
+              onClick={silence}
+              size="lg"
+              className="bg-red-600 hover:bg-red-700 text-white text-xl px-12 py-6 rounded-xl"
+            >
+              Silence Alarm
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Live region for announcements */}
       <div aria-live="polite" className="sr-only" id="announcements" />
 
@@ -272,13 +293,16 @@ export const MinimalCryptoTracker = () => {
               Settings
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Cryptocurrency Assets</DialogTitle>
+              <DialogTitle>Settings</DialogTitle>
             </DialogHeader>
             <Suspense fallback={<div className="p-4 text-gray-400">Loading...</div>}>
               <AssetSelector selectedAssets={selectedAssets} onAssetsChange={handleAssetChange} />
             </Suspense>
+            <div className="border-t border-gray-700 pt-4 mt-4">
+              <AlertSoundSettings />
+            </div>
           </DialogContent>
         </Dialog>
       </div>

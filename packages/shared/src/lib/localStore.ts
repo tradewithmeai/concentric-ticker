@@ -31,6 +31,7 @@ export interface AudioPreferences {
   sound_enabled: boolean
   sound_type: string
   volume: number
+  persistent: boolean
 }
 
 function generateId(): string {
@@ -96,9 +97,9 @@ export function getAudioPreferences(): AudioPreferences {
     const raw = localStorage.getItem(AUDIO_PREFS_KEY)
     return raw
       ? JSON.parse(raw)
-      : { sound_enabled: false, sound_type: 'bell', volume: 0.7 }
+      : { sound_enabled: true, sound_type: 'alert', volume: 1.0, persistent: false }
   } catch {
-    return { sound_enabled: false, sound_type: 'bell', volume: 0.7 }
+    return { sound_enabled: true, sound_type: 'alert', volume: 1.0, persistent: false }
   }
 }
 

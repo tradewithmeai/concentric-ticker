@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import {
   getAlerts,
   updateAlert,
@@ -13,17 +13,47 @@ interface PriceData {
   change: number
 }
 
+interface ActiveAlarm {
+  alertId: string
+  description: string
+}
+
 /**
  * Background alert checker hook.
  * Runs at the top level of the app, checking all active alerts
  * against live price data on every price update.
+ *
+ * Returns { activeAlarm, silence } for persistent alarm UI.
  */
 export function useAlertChecker(priceData: Record<string, PriceData>) {
   const { toast } = useToast()
-  // Track which alerts we've already triggered this session to avoid duplicates
   const triggeredIds = useRef<Set<string>>(new Set())
+  const loopInterval = useRef<ReturnType<typeof setInterval> | null>(null)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const [activeAlarm, setActiveAlarm] = useState<ActiveAlarm | null>(null)
 
-  const playAudioAlert = useCallback(() => {
+  // Stop any looping sound
+  const silence = useCallback(() => {
+    if (loopInterval.current) {
+      clearInterval(loopInterval.current)
+      loopInterval.current = null
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {})
+      audioCtxRef.current = null
+    }
+    setActiveAlarm(null)
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (loopInterval.current) clearInterval(loopInterval.current)
+      if (audioCtxRef.current) audioCtxRef.current.close().catch(() => {})
+    }
+  }, [])
+
+  const playAlarmPattern = useCallback(() => {
     try {
       const prefs = getAudioPreferences()
       if (!prefs.sound_enabled) return
@@ -34,7 +64,16 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
           .webkitAudioContext
       if (!AudioContextClass) return
 
-      const audioContext = new AudioContextClass()
+      // Reuse or create audio context
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioContextClass()
+      }
+      const ctx = audioCtxRef.current
+
+      // Resume if suspended (browser autoplay policy)
+      if (ctx.state === 'suspended') {
+        ctx.resume()
+      }
 
       const frequencies: Record<string, number> = {
         chime: 800,
@@ -44,38 +83,51 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
         beep: 880,
       }
 
-      const playBeep = (delay: number) => {
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
+      const vol = prefs.volume
 
-        oscillator.frequency.setValueAtTime(
-          frequencies[prefs.sound_type] || 880,
-          audioContext.currentTime + delay
-        )
+      const playBeep = (delay: number, freq: number) => {
+        const oscillator = ctx.createOscillator()
+        const gainNode = ctx.createGain()
+        oscillator.connect(gainNode)
+        gainNode.connect(ctx.destination)
+
+        oscillator.frequency.setValueAtTime(freq, ctx.currentTime + delay)
         oscillator.type = 'sine'
 
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime + delay)
-        gainNode.gain.linearRampToValueAtTime(
-          prefs.volume * 0.3,
-          audioContext.currentTime + delay + 0.01
-        )
-        gainNode.gain.exponentialRampToValueAtTime(
-          0.01,
-          audioContext.currentTime + delay + 0.5
-        )
+        gainNode.gain.setValueAtTime(0, ctx.currentTime + delay)
+        gainNode.gain.linearRampToValueAtTime(vol, ctx.currentTime + delay + 0.01)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.8)
 
-        oscillator.start(audioContext.currentTime + delay)
-        oscillator.stop(audioContext.currentTime + delay + 0.5)
+        oscillator.start(ctx.currentTime + delay)
+        oscillator.stop(ctx.currentTime + delay + 0.8)
       }
 
-      playBeep(0)
-      playBeep(0.6)
-    } catch (error) {
-      console.error('Error playing audio alert:', error)
+      const baseFreq = frequencies[prefs.sound_type] || 880
+      playBeep(0, baseFreq)
+      playBeep(0.5, baseFreq * 1.25)
+      playBeep(1.0, baseFreq * 1.5)
+    } catch (err) {
+      console.error('Error playing audio alert:', err)
     }
   }, [])
+
+  const startPersistentAlarm = useCallback(
+    (description: string, alertId: string) => {
+      // Stop any existing alarm first
+      if (loopInterval.current) {
+        clearInterval(loopInterval.current)
+      }
+
+      setActiveAlarm({ alertId, description })
+
+      // Play immediately, then repeat every 3 seconds
+      playAlarmPattern()
+      loopInterval.current = setInterval(() => {
+        playAlarmPattern()
+      }, 3000)
+    },
+    [playAlarmPattern]
+  )
 
   const triggerAlert = useCallback(
     async (alert: LocalAlert, currentPrice: number) => {
@@ -87,8 +139,6 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
         status: 'triggered',
         triggered_at: new Date().toISOString(),
       })
-
-      playAudioAlert()
 
       const sym = alert.symbol.replace('USDT', '')
 
@@ -104,10 +154,18 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
         description = `${sym} ${dir} $${alert.target_price.toFixed(4)}`
       }
 
+      // Play sound — persistent or one-shot
+      const prefs = getAudioPreferences()
+      if (prefs.persistent) {
+        startPersistentAlarm(description, alert.id)
+      } else {
+        playAlarmPattern()
+      }
+
       toast({
         title: 'Price Alert Triggered!',
         description,
-        duration: 8000,
+        duration: prefs.persistent ? Infinity : 8000,
       })
 
       // Execute trade if configured
@@ -129,11 +187,10 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
         }
       }
     },
-    [toast, playAudioAlert]
+    [toast, playAlarmPattern, startPersistentAlarm]
   )
 
   useEffect(() => {
-    // No prices yet, nothing to check
     const symbols = Object.keys(priceData)
     if (symbols.length === 0) return
 
@@ -180,9 +237,7 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
         const highWatermark = alert.trailing_high || currentPrice
 
         if (alert.direction === 'above') {
-          // Tracking upward: trigger when price drops from high
           if (currentPrice > highWatermark) {
-            // New high — update watermark and trigger price
             const newTrigger = currentPrice * (1 - alert.trailing_percent / 100)
             updateAlert(alert.id, {
               trailing_high: currentPrice,
@@ -192,12 +247,11 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
             triggerAlert(alert, currentPrice)
           }
         } else {
-          // Tracking downward: trigger when price rises from low
-          const lowWatermark = highWatermark // reuse field as low tracker
+          const lowWatermark = highWatermark
           if (currentPrice < lowWatermark) {
             const newTrigger = currentPrice * (1 + alert.trailing_percent / 100)
             updateAlert(alert.id, {
-              trailing_high: currentPrice, // store low watermark
+              trailing_high: currentPrice,
               target_price: newTrigger,
             })
           } else if (currentPrice >= alert.target_price) {
@@ -207,4 +261,6 @@ export function useAlertChecker(priceData: Record<string, PriceData>) {
       }
     }
   }, [priceData, triggerAlert])
+
+  return { activeAlarm, silence }
 }
