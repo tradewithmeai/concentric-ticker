@@ -13,18 +13,19 @@
     "build:android": "vite build && npx cap sync android"
   },
   "dependencies": {
-    "@concentric/shared": "workspace:*",
+    "@anuradev/capacitor-background-mode": "6.0.0",
     "@capacitor/core": "^6.2.0",
     "@capacitor/preferences": "^6.0.0",
-    "@capacitor/status-bar": "^6.0.0",
     "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@concentric/shared": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.2.0",
     "@capacitor/android": "^6.2.0",
+    "@capacitor/cli": "^6.2.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",

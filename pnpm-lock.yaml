@@ -20,6 +20,9 @@ importers:
 
   apps/android:
     dependencies:
+      '@anuradev/capacitor-background-mode':
+        specifier: 6.0.0
+        version: 6.0.0(@capacitor/core@6.2.1)
       '@capacitor/core':
         specifier: ^6.2.0
         version: 6.2.1
@@ -332,6 +335,11 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
+
+  '@anuradev/capacitor-background-mode@6.0.0':
+    resolution: {integrity: sha512-5vFSa724ECp1m7+5qNHePt95N9pENwT97uODaTnBv9L1xJNoRH8dYeD3VqALiTPZYC1N+2OnjKPhRTVLC9S18Q==}
+    peerDependencies:
+      '@capacitor/core': 6.2.0
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -3661,6 +3669,10 @@ snapshots:
   7zip-bin@5.2.0: {}
 
   '@alloc/quick-lru@5.2.0': {}
+
+  '@anuradev/capacitor-background-mode@6.0.0(@capacitor/core@6.2.1)':
+    dependencies:
+      '@capacitor/core': 6.2.1
 
   '@babel/code-frame@7.29.0':
     dependencies:

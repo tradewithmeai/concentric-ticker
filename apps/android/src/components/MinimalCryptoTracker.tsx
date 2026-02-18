@@ -24,6 +24,7 @@ import { TradingDialog } from '@concentric/shared/components/trading/TradingDial
 import { DCADialog } from '@concentric/shared/components/trading/DCADialog'
 import { AlertSoundSettings } from '@concentric/shared/components/AlertSoundSettings'
 import { useDCAScheduler } from '@concentric/shared/hooks/useDCAScheduler'
+import { BackgroundMode } from '@anuradev/capacitor-background-mode'
 
 interface DisplayAlert {
   id: string
@@ -127,6 +128,25 @@ export const MinimalCryptoTracker = () => {
 
   // DCA scheduler — runs in background while app is open
   const { strategies: dcaStrategies, refreshStrategies: refreshDCA } = useDCAScheduler()
+
+  // Enable Android background mode when DCA strategies are active
+  const hasActiveDCA = dcaStrategies.some((s) => s.enabled)
+
+  useEffect(() => {
+    if (hasActiveDCA) {
+      BackgroundMode.enable({
+        title: 'Concentric Ticker',
+        text: 'DCA strategies running...',
+      }).catch(() => {})
+      BackgroundMode.disableWebViewOptimizations().catch(() => {})
+    } else {
+      BackgroundMode.disable().catch(() => {})
+    }
+
+    return () => {
+      BackgroundMode.disable().catch(() => {})
+    }
+  }, [hasActiveDCA])
 
   const shouldShowSkeleton = useDelayedTrue(isLoading)
 
