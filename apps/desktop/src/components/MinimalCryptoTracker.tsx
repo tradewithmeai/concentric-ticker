@@ -24,6 +24,7 @@ import { TradingDialog } from '@concentric/shared/components/trading/TradingDial
 import { DCADialog } from '@concentric/shared/components/trading/DCADialog'
 import { AlertSoundSettings } from '@concentric/shared/components/AlertSoundSettings'
 import { useDCAScheduler } from '@concentric/shared/hooks/useDCAScheduler'
+import { OnboardingTutorial } from '@concentric/shared/components/OnboardingTutorial'
 
 interface DisplayAlert {
   id: string
@@ -56,6 +57,9 @@ export const MinimalCryptoTracker = () => {
   const [loading, setLoading] = useState(false)
   const [cancelingAlert, setCancelingAlert] = useState<string | null>(null)
   const [cancelingAll, setCancelingAll] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => localStorage.getItem('concentric-onboarding-complete') !== 'true'
+  )
 
   const loadAlerts = useCallback(() => {
     setLoading(true)
@@ -164,6 +168,11 @@ export const MinimalCryptoTracker = () => {
 
   return (
     <div className="space-y-8">
+      {/* First-time onboarding tutorial */}
+      {showOnboarding && (
+        <OnboardingTutorial onComplete={() => setShowOnboarding(false)} />
+      )}
+
       {/* Persistent alarm overlay */}
       {activeAlarm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">

@@ -368,17 +368,24 @@ export const ConcentricTicker = React.memo<ConcentricTickerProps>(
                           )}
 
                           {/* Clickable lightning bolt at 100% volume mark */}
-                          <foreignObject x={midPointX - 12} y={midPointY - 12} width="24" height="24">
-                            <button
-                              onClick={() => handleTimeframeClick(tf)}
-                              className="w-6 h-6 bg-transparent border-none cursor-pointer hover:scale-125 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded flex items-center justify-center transition-transform"
-                              style={{ fontSize: '14px', lineHeight: 1 }}
-                              aria-label={`Open technical analysis for ${symbol} ${tf} timeframe`}
-                              title={`View technical indicators for ${tf} timeframe`}
+                          <g
+                            onClick={() => handleTimeframeClick(tf)}
+                            className="cursor-pointer"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Open technical analysis for ${symbol} ${tf} timeframe`}
+                          >
+                            <circle cx={midPointX} cy={midPointY} r="8" fill="rgba(0,0,0,0.5)" />
+                            <text
+                              x={midPointX}
+                              y={midPointY}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              fontSize="12"
                             >
                               ⚡
-                            </button>
-                          </foreignObject>
+                            </text>
+                          </g>
                         </svg>
 
                         {/* Timeframe label at bottom left */}
