@@ -104,12 +104,14 @@ function buildSteps(): OnboardingStep[] {
             <ol className="space-y-1 text-gray-300 list-none">
               {isMobile ? (
                 <>
-                  <li>1. Open the <strong className="text-white">Binance app</strong> on your phone</li>
-                  <li>2. Go to <strong className="text-white">Profile</strong> → <strong className="text-white">API Management</strong></li>
-                  <li>3. Tap <strong className="text-white">Create API</strong> → <strong className="text-white">System Generated</strong></li>
-                  <li>4. Name it <strong className="text-white">"Concentric Ticker"</strong> and complete 2FA</li>
-                  <li>5. Enable <strong className="text-yellow-400">Spot & Margin Trading</strong></li>
-                  <li>6. Copy the <strong className="text-white">API Key</strong> and <strong className="text-white">Secret Key</strong></li>
+                  <li>1. Open the <strong className="text-white">Binance app</strong> and switch to <strong className="text-yellow-400">Pro mode</strong></li>
+                  <li>2. Tap the <strong className="text-white">☰ menu</strong> (top-left corner)</li>
+                  <li>3. Tap <strong className="text-white">More Services</strong></li>
+                  <li>4. Search for <strong className="text-white">"API"</strong> and select <strong className="text-white">API Management</strong></li>
+                  <li>5. Tap <strong className="text-white">Create API</strong> → <strong className="text-white">System Generated</strong></li>
+                  <li>6. Name it <strong className="text-white">"Concentric Ticker"</strong> and complete 2FA</li>
+                  <li>7. Enable <strong className="text-yellow-400">Spot & Margin Trading</strong></li>
+                  <li>8. Copy the <strong className="text-white">API Key</strong> and <strong className="text-white">Secret Key</strong></li>
                 </>
               ) : (
                 <>
