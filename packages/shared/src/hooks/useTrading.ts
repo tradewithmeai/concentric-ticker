@@ -5,6 +5,7 @@ import { createWebCryptoSigner } from '../lib/trading/sign'
 import type {
   SignerFn,
   LimitOrderParams,
+  MarketOrderParams,
   OrderResponse,
   OpenOrder,
   BalanceEntry,
@@ -91,6 +92,16 @@ export function useTrading(options?: UseTradingOptions) {
     [getClient, ensureTimeSync],
   )
 
+  const placeMarketOrder = useCallback(
+    async (params: MarketOrderParams): Promise<OrderResponse> => {
+      const client = getClient()
+      if (!client) throw new Error('Not connected')
+      await ensureTimeSync(client)
+      return client.placeMarketOrder(params)
+    },
+    [getClient, ensureTimeSync],
+  )
+
   const getOpenOrders = useCallback(
     async (symbol?: string): Promise<OpenOrder[]> => {
       const client = getClient()
@@ -171,6 +182,7 @@ export function useTrading(options?: UseTradingOptions) {
     testConnection,
     refreshConnection,
     placeLimitOrder,
+    placeMarketOrder,
     getOpenOrders,
     getMarginOpenOrders,
     cancelOrder,

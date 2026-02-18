@@ -2,6 +2,7 @@ import { BINANCE_BASE } from '../env'
 import type {
   SignerFn,
   LimitOrderParams,
+  MarketOrderParams,
   OrderResponse,
   OpenOrder,
   BalanceEntry,
@@ -20,6 +21,7 @@ interface TradingClient {
   getSymbolFilters(symbol: string): Promise<SymbolFilters>
   testOrder(params: LimitOrderParams): Promise<void>
   placeLimitOrder(params: LimitOrderParams): Promise<OrderResponse>
+  placeMarketOrder(params: MarketOrderParams): Promise<OrderResponse>
   getOpenOrders(symbol?: string): Promise<OpenOrder[]>
   getMarginOpenOrders(symbol?: string): Promise<OpenOrder[]>
   cancelOrder(symbol: string, orderId: number): Promise<void>
@@ -162,6 +164,29 @@ export function createTradingClient(
     return signedRequest(endpoint, 'POST', reqParams)
   }
 
+  async function placeMarketOrder(params: MarketOrderParams): Promise<OrderResponse> {
+    const isMargin = params.accountType === 'MARGIN'
+    const endpoint = isMargin ? '/sapi/v1/margin/order' : '/api/v3/order'
+
+    const reqParams: Record<string, string> = {
+      symbol: params.symbol,
+      side: params.side,
+      type: 'MARKET',
+    }
+
+    if (params.quoteOrderQty) {
+      reqParams.quoteOrderQty = params.quoteOrderQty
+    } else if (params.quantity) {
+      reqParams.quantity = params.quantity
+    }
+
+    if (isMargin && params.sideEffectType) {
+      reqParams.sideEffectType = params.sideEffectType
+    }
+
+    return signedRequest(endpoint, 'POST', reqParams)
+  }
+
   async function getOpenOrders(symbol?: string): Promise<OpenOrder[]> {
     const params: Record<string, string> = {}
     if (symbol) params.symbol = symbol
@@ -199,6 +224,7 @@ export function createTradingClient(
     getSymbolFilters,
     testOrder,
     placeLimitOrder,
+    placeMarketOrder,
     getOpenOrders,
     getMarginOpenOrders,
     cancelOrder,

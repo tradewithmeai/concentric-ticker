@@ -27,6 +27,15 @@ export interface LimitOrderParams {
   sideEffectType?: SideEffectType
 }
 
+export interface MarketOrderParams {
+  symbol: string
+  side: OrderSide
+  quoteOrderQty?: string      // spend exact quote amount (e.g. 50 USDT) — for BUY
+  quantity?: string           // sell exact base quantity — for SELL
+  accountType?: AccountType
+  sideEffectType?: SideEffectType
+}
+
 export interface OrderResponse {
   orderId: number
   symbol: string

@@ -11,7 +11,7 @@ import { useCryptoData } from '@concentric/shared/hooks/useCryptoData'
 import { useAlertChecker } from '@concentric/shared/hooks/useAlertChecker'
 import { useDelayedTrue } from '@concentric/shared/hooks/useDelayedTrue'
 import { announce } from '@concentric/shared/utils/announcements'
-import { Plus, Settings, Bell, X, Trash2, BarChart3 } from 'lucide-react'
+import { Plus, Settings, Bell, X, Trash2, BarChart3, RefreshCw } from 'lucide-react'
 import { Button } from '@concentric/shared/components/ui/button'
 import {
   Dialog,
@@ -21,7 +21,9 @@ import {
   DialogTrigger,
 } from '@concentric/shared/components/ui/dialog'
 import { TradingDialog } from '@concentric/shared/components/trading/TradingDialog'
+import { DCADialog } from '@concentric/shared/components/trading/DCADialog'
 import { AlertSoundSettings } from '@concentric/shared/components/AlertSoundSettings'
+import { useDCAScheduler } from '@concentric/shared/hooks/useDCAScheduler'
 
 interface DisplayAlert {
   id: string
@@ -49,6 +51,7 @@ export const MinimalCryptoTracker = () => {
   const [showSettings, setShowSettings] = useState(false)
   const [showAlerts, setShowAlerts] = useState(false)
   const [showTrading, setShowTrading] = useState(false)
+  const [showDCA, setShowDCA] = useState(false)
   const [alerts, setAlerts] = useState<DisplayAlert[]>([])
   const [loading, setLoading] = useState(false)
   const [cancelingAlert, setCancelingAlert] = useState<string | null>(null)
@@ -121,6 +124,9 @@ export const MinimalCryptoTracker = () => {
 
   // Check alerts against live prices in the background
   const { activeAlarm, silence } = useAlertChecker(priceData)
+
+  // DCA scheduler — runs in background while app is open
+  const { strategies: dcaStrategies, refreshStrategies: refreshDCA } = useDCAScheduler()
 
   const shouldShowSkeleton = useDelayedTrue(isLoading)
 
@@ -280,6 +286,23 @@ export const MinimalCryptoTracker = () => {
           Trading
         </Button>
         <TradingDialog open={showTrading} onOpenChange={setShowTrading} />
+
+        {/* DCA Dialog */}
+        <Button
+          variant="outline"
+          className="bg-gray-800 border-gray-700 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label="Open DCA strategies"
+          onClick={() => setShowDCA(true)}
+        >
+          <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
+          DCA
+        </Button>
+        <DCADialog
+          open={showDCA}
+          onOpenChange={setShowDCA}
+          strategies={dcaStrategies}
+          onChanged={refreshDCA}
+        />
 
         {/* Settings Dialog */}
         <Dialog open={showSettings} onOpenChange={setShowSettings}>
