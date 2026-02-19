@@ -9,8 +9,15 @@ import { TechnicalData, calculateBollingerBands, calculateSMA } from '@concentri
 import { PriceChart } from './PriceChart'
 import { useToast } from '@concentric/shared/hooks/use-toast'
 import { createAlert } from '@concentric/shared/lib/localStore'
-import { TradeToggle } from '@concentric/shared/components/trading/TradeToggle'
-import type { TradeAlertConfig } from '@concentric/shared/lib/trading/types'
+import { getStoredKeys } from '@concentric/shared/lib/trading/keyStore'
+import { Switch } from '@concentric/shared/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@concentric/shared/components/ui/select'
 import { Bell, Plus, X } from 'lucide-react'
 
 interface TechnicalIndicatorsProps {
@@ -44,7 +51,17 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
   const [isUpdating, setIsUpdating] = useState(false)
   const [creatingAlert, setCreatingAlert] = useState<string | null>(null)
   const [alertsCreated, setAlertsCreated] = useState<Set<string>>(new Set())
-  const [tradeConfig, setTradeConfig] = useState<TradeAlertConfig | null>(null)
+  const [hasKeys] = useState(() => !!getStoredKeys())
+  const [tradeMode, setTradeMode] = useState(false)
+  // Pending trade alert — when trade mode is on, clicking a bell stores details here
+  // so the user can configure the trade before confirming
+  const [pendingAlert, setPendingAlert] = useState<{
+    name: string
+    value: number
+    side: 'BUY' | 'SELL'
+    quantity: string
+    accountType: 'SPOT' | 'MARGIN'
+  } | null>(null)
 
   // Default MA configurations - can be moved to props later if needed
   const [movingAverages, setMovingAverages] = useState([
@@ -135,6 +152,18 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
         return
       }
 
+      // If trade mode is on, show config form instead of creating immediately
+      if (tradeMode) {
+        setPendingAlert({
+          name: indicatorName,
+          value: indicatorValue,
+          side: 'BUY',
+          quantity: '',
+          accountType: 'MARGIN',
+        })
+        return
+      }
+
       setCreatingAlert(indicatorName)
 
       try {
@@ -143,17 +172,8 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
           target_price: indicatorValue,
           direction: isAbove ? 'above' : 'below',
           alert_type: 'price_cross',
-          ...(tradeConfig?.trade_enabled
-            ? {
-                trade_enabled: true,
-                trade_side: tradeConfig.trade_side,
-                trade_quantity: tradeConfig.trade_quantity,
-                trade_account_type: tradeConfig.trade_account_type,
-              }
-            : {}),
         })
 
-        // Track that this alert has been created
         setAlertsCreated((prev) => new Set([...prev, indicatorName]))
 
         toast({
@@ -171,8 +191,44 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
         setCreatingAlert(null)
       }
     },
-    [symbol, toast, tradeConfig]
+    [symbol, toast, tradeMode]
   )
+
+  // Confirm pending trade alert
+  const confirmTradeAlert = useCallback(() => {
+    if (!pendingAlert || !pendingAlert.quantity) return
+
+    const isAbove = currentPrice < pendingAlert.value
+
+    try {
+      createAlert({
+        symbol,
+        target_price: pendingAlert.value,
+        direction: isAbove ? 'above' : 'below',
+        alert_type: 'price_cross',
+        trade_enabled: true,
+        trade_side: pendingAlert.side,
+        trade_quantity: pendingAlert.quantity,
+        trade_account_type: pendingAlert.accountType,
+      })
+
+      setAlertsCreated((prev) => new Set([...prev, pendingAlert.name]))
+
+      toast({
+        title: 'Trade alert created',
+        description: `${pendingAlert.side} ${pendingAlert.quantity} ${pendingAlert.accountType} when ${pendingAlert.name} hit at $${formatPrice(pendingAlert.value)}`,
+      })
+    } catch (error) {
+      console.error('Error creating trade alert:', error)
+      toast({
+        title: 'Error',
+        description: 'Could not create alert. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setPendingAlert(null)
+    }
+  }, [pendingAlert, currentPrice, symbol, toast])
 
   // Helper function to get bell icon styling
   const getBellIconStyle = (indicatorName: string, activeColor: string) => {
@@ -280,8 +336,89 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
               movingAverages={movingAverages}
               onMAConfigChange={handleMAConfigChange}
             />
-            {/* Trade on Alert Toggle */}
-            <TradeToggle onChange={setTradeConfig} />
+            {/* Trade mode toggle + pending trade config */}
+            {hasKeys && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <Switch
+                    checked={tradeMode}
+                    onCheckedChange={setTradeMode}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
+                  <span className="text-white text-sm">Auto-trade on alert trigger</span>
+                </div>
+
+                {pendingAlert && (
+                  <div className="p-3 rounded-lg bg-gray-800 border border-blue-600 space-y-3">
+                    <p className="text-sm text-white font-medium">
+                      Trade config for <span className="text-blue-400">{pendingAlert.name}</span> at ${formatPrice(pendingAlert.value)}
+                    </p>
+                    <div className="flex gap-2">
+                      <Select
+                        value={pendingAlert.side}
+                        onValueChange={(v: 'BUY' | 'SELL') =>
+                          setPendingAlert((p) => p && { ...p, side: v })
+                        }
+                      >
+                        <SelectTrigger className="w-24 bg-gray-900 border-gray-700 text-white h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-800 border-gray-700">
+                          <SelectItem value="BUY" className="text-green-400">BUY</SelectItem>
+                          <SelectItem value="SELL" className="text-red-400">SELL</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Input
+                        placeholder="Quantity"
+                        value={pendingAlert.quantity}
+                        onChange={(e) =>
+                          setPendingAlert((p) => p && { ...p, quantity: e.target.value })
+                        }
+                        className="bg-gray-900 border-gray-700 text-white h-8 text-sm"
+                        type="number"
+                        step="any"
+                        min="0"
+                        autoFocus
+                      />
+
+                      <Select
+                        value={pendingAlert.accountType}
+                        onValueChange={(v: 'SPOT' | 'MARGIN') =>
+                          setPendingAlert((p) => p && { ...p, accountType: v })
+                        }
+                      >
+                        <SelectTrigger className="w-28 bg-gray-900 border-gray-700 text-white h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-800 border-gray-700">
+                          <SelectItem value="SPOT" className="text-white">Spot</SelectItem>
+                          <SelectItem value="MARGIN" className="text-white">Margin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={confirmTradeAlert}
+                        disabled={!pendingAlert.quantity}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-sm"
+                      >
+                        Create Alert + Trade
+                      </Button>
+                      <Button
+                        onClick={() => setPendingAlert(null)}
+                        variant="outline"
+                        size="sm"
+                        className="border-gray-700 text-gray-300 text-sm"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {/* Moving Averages */}
             <Card className="bg-gray-800 border-gray-700 p-4">
               <div className="flex items-center justify-between mb-4">
