@@ -9,6 +9,8 @@ import { TechnicalData, calculateBollingerBands, calculateSMA } from '@concentri
 import { PriceChart } from './PriceChart'
 import { useToast } from '@concentric/shared/hooks/use-toast'
 import { createAlert } from '@concentric/shared/lib/localStore'
+import { TradeToggle } from '@concentric/shared/components/trading/TradeToggle'
+import type { TradeAlertConfig } from '@concentric/shared/lib/trading/types'
 import { Bell, Plus, X } from 'lucide-react'
 
 interface TechnicalIndicatorsProps {
@@ -42,6 +44,7 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
   const [isUpdating, setIsUpdating] = useState(false)
   const [creatingAlert, setCreatingAlert] = useState<string | null>(null)
   const [alertsCreated, setAlertsCreated] = useState<Set<string>>(new Set())
+  const [tradeConfig, setTradeConfig] = useState<TradeAlertConfig | null>(null)
 
   // Default MA configurations - can be moved to props later if needed
   const [movingAverages, setMovingAverages] = useState([
@@ -140,6 +143,14 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
           target_price: indicatorValue,
           direction: isAbove ? 'above' : 'below',
           alert_type: 'price_cross',
+          ...(tradeConfig?.trade_enabled
+            ? {
+                trade_enabled: true,
+                trade_side: tradeConfig.trade_side,
+                trade_quantity: tradeConfig.trade_quantity,
+                trade_account_type: tradeConfig.trade_account_type,
+              }
+            : {}),
         })
 
         // Track that this alert has been created
@@ -160,7 +171,7 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
         setCreatingAlert(null)
       }
     },
-    [symbol, toast]
+    [symbol, toast, tradeConfig]
   )
 
   // Helper function to get bell icon styling
@@ -269,6 +280,8 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
               movingAverages={movingAverages}
               onMAConfigChange={handleMAConfigChange}
             />
+            {/* Trade on Alert Toggle */}
+            <TradeToggle onChange={setTradeConfig} />
             {/* Moving Averages */}
             <Card className="bg-gray-800 border-gray-700 p-4">
               <div className="flex items-center justify-between mb-4">
