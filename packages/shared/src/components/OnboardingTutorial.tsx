@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 const ONBOARDING_KEY = 'concentric-onboarding-complete'
+const ONBOARDING_STEP_KEY = 'concentric-onboarding-step'
 
 interface OnboardingTutorialProps {
   onComplete: () => void
@@ -54,7 +55,9 @@ function buildSteps(): OnboardingStep[] {
           <p>
             Each concentric circle represents a different timeframe (5m, 15m,
             1h, 4h, 1d). Green means bullish, red means bearish. The arc
-            thickness shows trading volume.
+            length shows relative volume — it extends as a percentage of the
+            previous period's volume. Up to the centre mark is 100%; beyond
+            that the colour changes to highlight above-average volume.
           </p>
           <p>
             Tap the <span className="text-yellow-400">⚡ lightning bolt</span>{' '}
@@ -99,6 +102,18 @@ function buildSteps(): OnboardingStep[] {
 
           <div className="space-y-1.5">
             <p className="text-white font-medium text-xs uppercase tracking-wide">
+              Prerequisites:
+            </p>
+            <p className="text-gray-400 text-xs">
+              You must have an <strong className="text-white">authenticator app</strong> and{' '}
+              <strong className="text-white">email verification</strong> set up on your
+              Binance account. You will need to verify twice — once when creating the API
+              key and again when changing permissions.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-white font-medium text-xs uppercase tracking-wide">
               Create your API key:
             </p>
             <ol className="space-y-1 text-gray-300 list-none">
@@ -109,18 +124,22 @@ function buildSteps(): OnboardingStep[] {
                   <li>3. Tap <strong className="text-white">More Services</strong></li>
                   <li>4. Search for <strong className="text-white">"API"</strong> and select <strong className="text-white">API Management</strong></li>
                   <li>5. Tap <strong className="text-white">Create API</strong> → <strong className="text-white">System Generated</strong></li>
-                  <li>6. Name it <strong className="text-white">"Concentric Ticker"</strong> and complete 2FA</li>
-                  <li>7. Enable <strong className="text-yellow-400">Spot & Margin Trading</strong></li>
-                  <li>8. Copy the <strong className="text-white">API Key</strong> and <strong className="text-white">Secret Key</strong></li>
+                  <li>6. Name it <strong className="text-white">"Concentric Ticker"</strong> and verify via authenticator app + email</li>
+                  <li>7. Select <strong className="text-white">"Restrict access to trusted IPs only"</strong></li>
+                  <li>8. Find your IP at <strong className="text-yellow-400">whatsmyipaddress.com</strong>, copy it and paste into the IP field</li>
+                  <li>9. Enable <strong className="text-yellow-400">Spot & Margin Trading</strong> and verify again via authenticator app + email</li>
+                  <li>10. Copy the <strong className="text-white">API Key</strong> and <strong className="text-white">Secret Key</strong></li>
                 </>
               ) : (
                 <>
                   <li>1. Go to <strong className="text-white">binance.com</strong> and log in</li>
                   <li>2. Navigate to <strong className="text-white">Account → API Management</strong></li>
                   <li>3. Click <strong className="text-white">Create API</strong> → <strong className="text-white">System Generated</strong></li>
-                  <li>4. Name it <strong className="text-white">"Concentric Ticker"</strong> and complete 2FA</li>
-                  <li>5. Enable <strong className="text-yellow-400">Spot & Margin Trading</strong></li>
-                  <li>6. Copy the <strong className="text-white">API Key</strong> and <strong className="text-white">Secret Key</strong></li>
+                  <li>4. Name it <strong className="text-white">"Concentric Ticker"</strong> and verify via authenticator app + email</li>
+                  <li>5. Select <strong className="text-white">"Restrict access to trusted IPs only"</strong></li>
+                  <li>6. Find your IP at <strong className="text-yellow-400">whatsmyipaddress.com</strong>, copy it and paste into the IP field</li>
+                  <li>7. Enable <strong className="text-yellow-400">Spot & Margin Trading</strong> and verify again via authenticator app + email</li>
+                  <li>8. Copy the <strong className="text-white">API Key</strong> and <strong className="text-white">Secret Key</strong></li>
                 </>
               )}
             </ol>
@@ -207,16 +226,30 @@ function buildSteps(): OnboardingStep[] {
 export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   onComplete,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [steps] = useState(() => buildSteps())
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const saved = localStorage.getItem(ONBOARDING_STEP_KEY)
+    if (saved) {
+      const parsed = parseInt(saved, 10)
+      if (!isNaN(parsed) && parsed >= 0 && parsed < steps.length) return parsed
+    }
+    return 0
+  })
+
+  const goTo = (index: number) => {
+    setCurrentIndex(index)
+    localStorage.setItem(ONBOARDING_STEP_KEY, String(index))
+  }
 
   const handleComplete = () => {
     localStorage.setItem(ONBOARDING_KEY, 'true')
+    localStorage.removeItem(ONBOARDING_STEP_KEY)
     onComplete()
   }
 
   const handleSkip = () => {
     localStorage.setItem(ONBOARDING_KEY, 'true')
+    localStorage.removeItem(ONBOARDING_STEP_KEY)
     onComplete()
   }
 
@@ -273,7 +306,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
           {currentIndex > 0 && (
             <Button
               variant="outline"
-              onClick={() => setCurrentIndex((i) => i - 1)}
+              onClick={() => goTo(currentIndex - 1)}
               className="border-gray-700 text-gray-300"
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
@@ -284,7 +317,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
             onClick={
               isLast
                 ? handleComplete
-                : () => setCurrentIndex((i) => i + 1)
+                : () => goTo(currentIndex + 1)
             }
             className="flex-1 bg-blue-600 hover:bg-blue-700"
           >
@@ -292,6 +325,14 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
             {!isLast && <ChevronRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
+
+        {/* Don't show again */}
+        <button
+          onClick={handleSkip}
+          className="w-full mt-3 text-gray-600 hover:text-gray-400 text-xs text-center"
+        >
+          Don't show this again
+        </button>
       </div>
     </div>
   )
