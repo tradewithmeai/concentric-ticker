@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@concentric/shared/components/ui/select'
 import { Bell, Plus, X } from 'lucide-react'
+import { InfoButton } from '@concentric/shared/components/InfoButton'
 
 interface TechnicalIndicatorsProps {
   isOpen: boolean
@@ -315,8 +316,9 @@ export const TechnicalIndicators: React.FC<TechnicalIndicatorsProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
             Technical Indicators - {symbol.replace('USDT', '')}/{timeframe.toUpperCase()}
+            <InfoButton stepIndex={1} />
           </DialogTitle>
         </DialogHeader>
 

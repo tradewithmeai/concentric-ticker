@@ -27,7 +27,7 @@ interface OnboardingStep {
   content: React.ReactNode
 }
 
-function buildSteps(): OnboardingStep[] {
+export function buildSteps(): OnboardingStep[] {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   return [
@@ -77,8 +77,16 @@ function buildSteps(): OnboardingStep[] {
         <div className="space-y-2">
           <p>
             Set alerts that trigger when an asset crosses your target price.
-            Create them from the technical analysis panel or the{' '}
-            <span className="text-blue-400 font-medium">Alerts</span> button.
+            Tap any <span className="text-yellow-400">⚡</span> to open
+            technical analysis, then tap the bell icon on any indicator level
+            (MA, Bollinger Band) to create an alert at that price.
+          </p>
+          <p>
+            Enable <span className="text-white font-medium">Auto-trade on alert trigger</span>{' '}
+            in the technical analysis panel to attach a trade to each alert.
+            When enabled, tapping a bell lets you configure the{' '}
+            <span className="text-white font-medium">side, quantity, and account type</span>{' '}
+            for that specific alert before creating it.
           </p>
           <p>
             Enable <span className="text-white font-medium">persistent alarm</span>{' '}
@@ -96,8 +104,9 @@ function buildSteps(): OnboardingStep[] {
       content: (
         <div className="space-y-3">
           <p>
-            Connect your Binance account to execute trades directly from the
-            app when alerts trigger.
+            Connect your Binance account to execute trades automatically.
+            Once connected, you can attach individual buy/sell orders to
+            any price alert — they execute when the alert triggers.
           </p>
 
           <div className="space-y-1.5">

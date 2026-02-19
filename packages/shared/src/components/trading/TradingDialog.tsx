@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { getStoredKeys } from '../../lib/trading/keyStore'
 import { ApiKeyWizard } from './ApiKeyWizard'
 import { OrdersPanel } from './OrdersPanel'
+import { InfoButton } from '../InfoButton'
 
 interface TradingDialogProps {
   open: boolean
@@ -31,7 +32,9 @@ export const TradingDialog: React.FC<TradingDialogProps> = ({ open, onOpenChange
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white">Trading</DialogTitle>
+          <DialogTitle className="text-white flex items-center gap-2">
+            Trading <InfoButton stepIndex={3} />
+          </DialogTitle>
           <DialogDescription className="text-gray-400">
             {connected ? 'Manage orders and connection' : 'Connect your Binance account'}
           </DialogDescription>

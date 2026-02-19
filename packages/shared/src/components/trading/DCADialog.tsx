@@ -10,6 +10,7 @@ import { getStoredKeys } from '../../lib/trading/keyStore'
 import { DCAForm } from './DCAForm'
 import { DCAList } from './DCAList'
 import type { DCAStrategy } from '../../lib/trading/dcaStore'
+import { InfoButton } from '../InfoButton'
 
 interface DCADialogProps {
   open: boolean
@@ -30,7 +31,9 @@ export const DCADialog: React.FC<DCADialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white">DCA Strategies</DialogTitle>
+          <DialogTitle className="text-white flex items-center gap-2">
+            DCA Strategies <InfoButton stepIndex={4} />
+          </DialogTitle>
           <DialogDescription className="text-gray-400">
             {hasKeys
               ? 'Automated dollar-cost averaging orders'

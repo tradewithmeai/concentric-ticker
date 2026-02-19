@@ -26,6 +26,7 @@ import { AlertSoundSettings } from '@concentric/shared/components/AlertSoundSett
 import { useDCAScheduler } from '@concentric/shared/hooks/useDCAScheduler'
 import { BackgroundMode } from '@anuradev/capacitor-background-mode'
 import { OnboardingTutorial } from '@concentric/shared/components/OnboardingTutorial'
+import { InfoButton } from '@concentric/shared/components/InfoButton'
 
 interface DisplayAlert {
   id: string
@@ -217,8 +218,9 @@ export const MinimalCryptoTracker = () => {
       <div aria-live="polite" className="sr-only" id="announcements" />
 
       {/* Controls */}
-      <div className="flex justify-center gap-4">
+      <div className="flex justify-center gap-4 items-center">
         <h3 className="sr-only">Control Panel</h3>
+        <InfoButton stepIndex={1} />
         {/* Alerts Dialog */}
         <Dialog open={showAlerts} onOpenChange={setShowAlerts}>
           <DialogTrigger asChild>
@@ -233,7 +235,9 @@ export const MinimalCryptoTracker = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Alert Management</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                Alert Management <InfoButton stepIndex={2} />
+              </DialogTitle>
             </DialogHeader>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
@@ -347,7 +351,9 @@ export const MinimalCryptoTracker = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Settings</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                Settings <InfoButton stepIndex={5} />
+              </DialogTitle>
             </DialogHeader>
             <Suspense fallback={<div className="p-4 text-gray-400">Loading...</div>}>
               <AssetSelector selectedAssets={selectedAssets} onAssetsChange={handleAssetChange} />
